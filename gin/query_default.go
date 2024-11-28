@@ -28,8 +28,12 @@ func QueryDefault[T any](c *gin.Context, key string, defaultValue T) (result T) 
 		return any(req).(T)
 	case time.Time:
 		return any(stringToTimeDefault(req, any(defaultValue).(time.Time))).(T)
+	default:
+		return result
 	}
-	return result
+}
+
+func QueryScan(c *gin.Context) {
 
 }
 
