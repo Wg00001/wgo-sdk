@@ -21,14 +21,16 @@ func TestGinQueryScan(t *testing.T) {
 	g := gin.Default()
 	g.GET("/test", func(c *gin.Context) {
 		target := struct {
-			A int32
-			B uint8 `json:"bbb"`
-			C string
-			D bool    `gin:"ddddd"`
-			E float64 `json:"e"`
-			F time.Time
-			G decimal.Decimal
-			H HQuery
+			A    int32
+			B    uint8 `json:"bbb"`
+			C    string
+			Cptr *string `json:"cptr"`
+			D    bool    `gin:"ddddd"`
+			E    float64 `json:"e"`
+			F    time.Time
+			G    decimal.Decimal
+			H    HQuery
+			Hptr *HQuery
 		}{}
 		QueryScan(c, &target)
 		fmt.Printf("target: %+v\n", target)

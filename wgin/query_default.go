@@ -16,6 +16,7 @@ import (
 type QueryField interface {
 	// QueryParse directly modify the structure through the pointer in this method.
 	// Pass the structure pointer to the method, read the input to convert it.
+	// You should define in this function how to convert the input string to what you need
 	QueryParse(value string)
 }
 
@@ -39,18 +40,24 @@ func QueryDefault[T any](c *gin.Context, key string, defaultValue T) (result T) 
 	if req == "" {
 		return
 	}
-	//defaultValue是值类型时无法直接通过与QueryField的类型比较,需要转换成指针再进行比较
-	//转换成指针后直接操作对应指针,然后直接操作该指针以修改
-	if ptr, ok := any(&defaultValue).(QueryField); ok {
-		ptr.QueryParse(req)
-		return any(defaultValue).(T)
-	}
-	switch any(defaultValue).(type) {
-	case QueryField:
+
+	// 处理 defaultValue 为指针的情况
+	if reflect.TypeOf(defaultValue).Kind() == reflect.Ptr {
+		// 判读当指针是 QueryField 指针的情况
 		// 如果 defaultValue 实现了 QueryField 接口，则调用 Parse
-		res := any(defaultValue).(QueryField)
-		res.QueryParse(req)
-		return any(res).(T)
+		if res, ok := any(defaultValue).(QueryField); ok {
+			res.QueryParse(req)
+			return any(res).(T)
+		}
+		val := reflect.ValueOf(defaultValue)
+		if val.IsNil() || !val.Elem().CanSet() {
+			// 如果指针为 nil 或不可设置，直接返回
+			return
+		}
+		defaultValue = any(val.Elem()).(T) // 获取指针指向的值
+	}
+
+	switch any(defaultValue).(type) {
 	case int, int8, int16, int32, int64:
 		atoi, err := strconv.ParseInt(req, 10, 64)
 		if err != nil {
@@ -86,6 +93,12 @@ func QueryDefault[T any](c *gin.Context, key string, defaultValue T) (result T) 
 			return
 		}
 		return any(dec).(T)
+	}
+	//defaultValue是值类型时无法直接通过与QueryField的类型比较,需要转换成指针再进行比较
+	//转换成指针后直接操作对应指针,然后直接操作该指针以修改
+	if ptr, ok := any(&defaultValue).(QueryField); ok {
+		ptr.QueryParse(req)
+		return any(defaultValue).(T)
 	}
 	return
 }
@@ -137,13 +150,32 @@ func QueryScan(c *gin.Context, obj interface{}) {
 			fieldValue.SetFloat(QueryDefault(c, queryKey, float64(0)))
 		case reflect.Bool:
 			fieldValue.SetBool(QueryDefault(c, queryKey, false))
+		case reflect.Ptr:
+			elemType := fieldValue.Type().Elem()
+			if ptr, ok := reflect.New(elemType).Interface().(QueryField); ok { //先对QueryField类型进行特殊判断
+				ptr = QueryDefault(c, queryKey, ptr)
+				if reflect.ValueOf(ptr).IsValid() {
+					if fieldValue.IsNil() { // 如果当前字段的指针值为 nil，需要先初始化指针
+						fieldValue.Set(reflect.New(elemType))
+					}
+					fieldValue.Elem().Set(reflect.ValueOf(ptr).Elem())
+				}
+			} else {
+				defaultValue := reflect.New(elemType).Elem().Interface()
+				result := QueryDefault(c, queryKey, defaultValue)
+				if reflect.ValueOf(result).IsValid() {
+					if fieldValue.IsNil() {
+						fieldValue.Set(reflect.New(elemType))
+					}
+					fieldValue.Elem().Set(reflect.ValueOf(result))
+				}
+			}
 		case reflect.Struct:
 			switch field.Type {
 			case reflect.TypeOf(time.Time{}):
 				fieldValue.Set(reflect.ValueOf(QueryDefault(c, queryKey, time.Time{})))
 			case reflect.TypeOf(decimal.Decimal{}):
 				fieldValue.Set(reflect.ValueOf(QueryDefault(c, queryKey, decimal.Decimal{})))
-
 			default:
 				if fieldValue.CanAddr() {
 					// 判断 fieldValue 是否实现了 QueryField 接口
@@ -155,7 +187,6 @@ func QueryScan(c *gin.Context, obj interface{}) {
 					}
 				}
 				fmt.Printf("unsupported field struct: %s\n", field.Type.String())
-
 			}
 		default:
 			fmt.Printf("unsupported field type: %s\n", fieldValue.Kind().String())
