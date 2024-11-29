@@ -1,4 +1,4 @@
-package csv
+package wgo_csv
 
 import (
 	"crypto/md5"
