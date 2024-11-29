@@ -1,4 +1,4 @@
-package test
+package wgin
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"testing"
 	"time"
-	"wgo-sdk/wgin"
 )
 
 type HH struct {
@@ -30,7 +29,7 @@ func TestGin(t *testing.T) {
 			F time.Time
 			G decimal.Decimal
 		}{}
-		wgin.QueryScan(c, &target)
+		QueryScan(c, &target)
 		fmt.Printf("target: %+v\n", target)
 		c.JSONP(http.StatusOK, target)
 		c.Abort()

@@ -23,8 +23,10 @@ func Response(c *gin.Context, status int, args ...interface{}) {
 		if str, ok := args[0].(string); ok {
 			// 如果 args[0] 是字符串类型，执行相关逻辑
 			resp.Message = str
+			args = args[1:]
 		}
 	}
+	resp.Data = args
 	c.JSONP(http.StatusOK, resp)
 	c.Abort()
 }

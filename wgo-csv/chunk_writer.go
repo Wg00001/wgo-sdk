@@ -36,7 +36,7 @@ func ChunkWrite[T CsvRow](writer *csv.Writer, data []T, size ...int) (err error)
 	if writer == nil {
 		return errors.New("csv writer is NULL")
 	}
-	pageSize := 2000
+	pageSize := 5000
 	if len(size) != 0 {
 		pageSize = size[0]
 	}
