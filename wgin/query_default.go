@@ -39,6 +39,12 @@ func QueryDefault[T any](c *gin.Context, key string, defaultValue T) (result T) 
 	if req == "" {
 		return
 	}
+	//defaultValue是值类型时无法直接通过与QueryField的类型比较,需要转换成指针再进行比较
+	//转换成指针后直接操作对应指针,然后直接操作该指针以修改
+	if ptr, ok := any(&defaultValue).(QueryField); ok {
+		ptr.QueryParse(req)
+		return any(defaultValue).(T)
+	}
 	switch any(defaultValue).(type) {
 	case QueryField:
 		// 如果 defaultValue 实现了 QueryField 接口，则调用 Parse
@@ -137,16 +143,19 @@ func QueryScan(c *gin.Context, obj interface{}) {
 				fieldValue.Set(reflect.ValueOf(QueryDefault(c, queryKey, time.Time{})))
 			case reflect.TypeOf(decimal.Decimal{}):
 				fieldValue.Set(reflect.ValueOf(QueryDefault(c, queryKey, decimal.Decimal{})))
-			// 如果字段实现了 QueryField 接口，调用其 QueryParse 方法进行解析
-			case reflect.TypeOf((*QueryField)(nil)).Elem():
-				if fieldValue.CanAddr() {
-					// 获取 QueryField 的指针类型值
-					queryField := fieldValue.Addr().Interface().(QueryField)
-					// 调用 QueryParse 方法来修改值
-					queryField.QueryParse(QueryDefault(c, queryKey, "")) // 直接修改 fieldValue
-				}
+
 			default:
+				if fieldValue.CanAddr() {
+					// 判断 fieldValue 是否实现了 QueryField 接口
+					if queryField, ok := fieldValue.Addr().Interface().(QueryField); ok {
+						// 如果字段实现了 QueryField 接口，调用其 QueryParse 方法进行解析
+						//queryField.QueryParse(QueryDefault(c, queryKey, "")) // 直接修改 fieldValue
+						queryField = QueryDefault(c, queryKey, queryField)
+						break
+					}
+				}
 				fmt.Printf("unsupported field struct: %s\n", field.Type.String())
+
 			}
 		default:
 			fmt.Printf("unsupported field type: %s\n", fieldValue.Kind().String())
