@@ -128,7 +128,7 @@ func ChainRun(chain ...interface{}) (any, error) {
 	var err error
 
 	for i := 0; i < len(chain); i++ {
-		//todo:err
+		//todo:err handle
 		mr, ok := chain[i].(MapReduceItf)
 		if ok {
 			return nil, errors.New("invalid MapReduce type")

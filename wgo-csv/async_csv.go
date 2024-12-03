@@ -12,7 +12,7 @@ import (
 )
 
 // Provides an asynchronous csv file generation to avoid interface timeouts.
-// 1. The backend uses WriteCSV or WriteCSVbyKey in the interface function and implements the corresponding input function.
+// 1. The backend uses AsyncCSV or AsyncWriteCSV in the interface function and implements the corresponding input function.
 // 2. The front end can then poll the interface with the same request parameters and finally get the corresponding file address.
 // If an error occurs, the error during sync is returned immediately, and the error after async is written to the csv file.
 var (
@@ -20,21 +20,21 @@ var (
 	mu       sync.Mutex
 )
 
-// WriteCSV generates a CSV file using a key derived from the MD5 hash of the provided request.
-// It calls WriteCSVbyKey with the hashed key to manage file creation and writing.
-func WriteCSV(req interface{}, filePrefix string, writerFunc func(*csv.Writer) (err error)) (filename string, err error) {
-	return WriteCSVbyKey(Md5Hash(req), filePrefix, writerFunc)
+// AsyncCSV generates a CSV file using a key derived from the MD5 hash of the provided request.
+// It calls AsyncWriteCSV with the hashed key to manage file creation and writing.
+func AsyncCSV(req interface{}, filePrefix string, writerFunc func(*csv.Writer) (err error)) (filename string, err error) {
+	return AsyncWriteCSV(Md5Hash(req), filePrefix, writerFunc)
 }
 
-// WriteCSVbyKey generates a CSV file and associates it with the given key.
+// AsyncWriteCSV generates a CSV file and associates it with the given key.
 // It checks if the file is already being created or has been created.
 // If not, it starts the CSV file creation process and calls writerFunc to populate the file.
 // The function returns the file path once the file is ready or an error if the process fails.
 // If the file is being created or was already created, it returns the existing file path.
-func WriteCSVbyKey(key string, filePrefix string, writerFunc func(*csv.Writer) (err error)) (filename string, err error) {
+func AsyncWriteCSV(key string, filePrefix string, writerFunc func(*csv.Writer) (err error)) (filename string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("WriteCSV Panic: %v", r)
+			err = fmt.Errorf("AsyncCSV Panic: %v", r)
 		}
 	}()
 	if p := GetFilepath(key); p != "" {
