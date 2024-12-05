@@ -1,4 +1,4 @@
-module wgo-sdk
+module github.com/wg00001/wgo-sdk
 
 go 1.22
 
