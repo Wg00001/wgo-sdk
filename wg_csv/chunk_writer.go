@@ -1,4 +1,4 @@
-package wgo_csv
+package wg_csv
 
 import (
 	"encoding/csv"

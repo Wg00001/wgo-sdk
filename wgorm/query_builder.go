@@ -12,10 +12,15 @@ type WGorm struct {
 	*gorm.DB
 }
 
-func InitWGorm(db *gorm.DB) *WGorm {
+func NewWGorm(db *gorm.DB) *WGorm {
 	return &WGorm{DB: db}
 }
 
+func (q *WGorm) Gorm() *gorm.DB {
+	return q.DB
+}
+
+// IfWhere if conditions is true, where will add
 func (q *WGorm) IfWhere(conditions bool, query interface{}, arg ...interface{}) *WGorm {
 	if !conditions || q.Error != nil {
 		return q
@@ -24,6 +29,7 @@ func (q *WGorm) IfWhere(conditions bool, query interface{}, arg ...interface{}) 
 	return q
 }
 
+// NzWhere - NonzeroWhere
 func (q *WGorm) NzWhere(field string, arg interface{}) *WGorm {
 	if q.Error != nil {
 		return q
@@ -52,6 +58,9 @@ func (q *WGorm) NzWhere(field string, arg interface{}) *WGorm {
 
 // NzRadius 范围查询
 func (q *WGorm) NzRadius(field string, start, end interface{}) *WGorm {
+	if q.Error != nil {
+		return q
+	}
 	strStart := fmt.Sprintf("%s >= ?", field)
 	strEnd := fmt.Sprintf("%s <= ?", field)
 	if reflect.TypeOf(start) != reflect.TypeOf(end) {
@@ -77,6 +86,9 @@ func (q *WGorm) NzLimit(page, pageSize int) *WGorm {
 }
 
 func (q *WGorm) Count(count *int64) *WGorm {
-	q.Count(count)
+	if q.Error != nil {
+		return q
+	}
+	q.DB.Count(count)
 	return q
 }

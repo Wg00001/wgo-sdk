@@ -1,24 +1,26 @@
-package wgo_decimal
+package wg_decimal
 
 import (
 	"github.com/shopspring/decimal"
 )
 
-type DecimalWgo struct {
+type Decimal struct {
 	decimal.Decimal
 }
 
 type Number interface {
 	int | int8 | int16 | int32 | int64 |
 		uint | uint8 | uint16 | uint32 | uint64 |
-		float32 | float64 | decimal.Decimal
+		float32 | float64 | decimal.Decimal | Decimal
 }
 
-func New[T Number](val T) DecimalWgo {
-	var result DecimalWgo
+func New[T Number](val T) Decimal {
+	var result Decimal
 	switch v := any(val).(type) {
 	case decimal.Decimal:
 		result.Decimal = v
+	case Decimal:
+		result.Decimal = v.Decimal
 	case int:
 		result.Decimal = decimal.NewFromInt(int64(v))
 	case int8:
@@ -46,11 +48,21 @@ func New[T Number](val T) DecimalWgo {
 	}
 	return result
 }
-
-// todo:值复制太多次了
-func Div[T Number](a, b T) DecimalWgo {
+func Add[T, U Number](a T, b U) Decimal {
+	return New(New(a).Add(New(b).Decimal))
+}
+func Sub[T, U Number](a T, b U) Decimal {
+	return New(New(a).Sub(New(b).Decimal))
+}
+func Div[T, U Number](a T, b U) Decimal {
 	return New(New(a).Div(New(b).Decimal))
 }
-func Add[T Number](a, b T) DecimalWgo {
-	return New(New(a).Add(New(b).Decimal))
+func Mul[T, U Number](a T, b U) Decimal {
+	return New(New(a).Mul(New(b).Decimal))
+}
+func Pow[T, U Number](a T, b U) Decimal {
+	return New(New(a).Pow(New(b).Decimal))
+}
+func Equal[T, U Number](a T, b U) bool {
+	return New(a).Equal(New(b).Decimal)
 }
