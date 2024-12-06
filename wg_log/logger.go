@@ -8,14 +8,14 @@ import (
 	"time"
 )
 
-var logFile *os.File
-
 const (
 	ERROR int = iota
 	WARRING
 	PANIC
 	FATAL
 )
+
+var logFile *os.File
 
 func InitLogger(errLogPath string) {
 	if errLogPath == "" {

@@ -1,4 +1,4 @@
-package wg_yaml
+package wg
 
 import (
 	"gopkg.in/yaml.v3"
