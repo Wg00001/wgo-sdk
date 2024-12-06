@@ -16,6 +16,17 @@ func SliceToSet[K comparable, T any](slice []T, getKey func(item T) K) map[K]str
 	return res
 }
 
+func SliceToSlice[T any, U any](slice []T, getResultSliceItem func(item T) U) []U {
+	if slice == nil || len(slice) == 0 {
+		return []U{}
+	}
+	res := make([]U, 0, len(slice))
+	for _, item := range slice {
+		res = append(res, getResultSliceItem(item))
+	}
+	return res
+}
+
 func SliceUnique[E comparable](slice []E) []E {
 	return MapKeySlice(
 		SliceToSet(slice, func(item E) E {
