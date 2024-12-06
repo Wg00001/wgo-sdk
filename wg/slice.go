@@ -28,10 +28,15 @@ func SliceToSlice[T any, U any](slice []T, getResultSliceItem func(item T) U) []
 }
 
 func SliceUnique[E comparable](slice []E) []E {
-	return MapKeySlice(
-		SliceToSet(slice, func(item E) E {
-			return item
-		}))
+	var res []E
+	memo := make(map[E]struct{})
+	for i := range slice {
+		if _, ok := memo[slice[i]]; !ok {
+			res = append(res, slice[i])
+			memo[slice[i]] = struct{}{}
+		}
+	}
+	return res
 }
 
 func SliceChunk[T any](slice []T, size int) [][]T {
