@@ -1,28 +1,81 @@
 package wgorm
 
 import (
+	"errors"
+	"github.com/wg00001/wgo-sdk/wg_pool"
+	"gorm.io/driver/clickhouse"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 	"sync"
+	"time"
 )
 
-type wgormPool struct {
-	pool sync.Map
+type Option struct {
+	DSN                     string
+	Driver                  string
+	MaxConnection           int
+	MaxIdleConnection       int
+	TimeOut                 time.Duration
+	ConnPoolCleanupInterval time.Duration
+	SlowThreshold           time.Duration
 }
 
-var Pool wgormPool
+type Pool struct {
+	mu     sync.Mutex
+	conn   []*WGorm
+	option Option
+}
 
-func InitWGormPool() {
+var _ wg_pool.Pool[WGorm] = (*Pool)(nil)
+var _ wg_pool.Option = (*Option)(nil)
+
+func (p *Pool) Init(option wg_pool.Option) error {
+	var ok bool
+	p.option, ok = option.(Option)
+	if !ok {
+		return errors.New("Init Fail: option type fail")
+	}
+	for i := 0; i < p.option.MaxIdleConnection; i++ {
+		cur, err := p.Open()
+		if err != nil {
+			return err
+		}
+		p.conn = append(p.conn, &cur)
+	}
+}
+
+func (p *Pool) Get() (WGorm, error) {
+}
+
+func (p *Pool) CloseAll() {
 
 }
 
-func RegisterWGorm(wg WGorm) error {
-	return nil
+func (p *Pool) Len() int {
 }
 
-func Use() WGorm {
-	return WGorm{}
-}
-
-func UseGormDB() *gorm.DB {
-	return nil
+func (p *Pool) Open() (WGorm, error) {
+	var dialect gorm.Dialector
+	switch p.option.Driver {
+	case "mysql":
+		dialect = mysql.Open(p.option.DSN)
+	case "postgres":
+		dialect = postgres.Open(p.option.DSN)
+	case "sqlite":
+		dialect = sqlite.Open(p.option.DSN)
+	case "sqlserver":
+		dialect = sqlserver.Open(p.option.DSN)
+	case "clickhouse":
+		dialect = clickhouse.Open(p.option.DSN)
+	default:
+		return WGorm{}, errors.New("Driver not support: " + p.option.Driver)
+	}
+	db, err := gorm.Open(dialect)
+	if err != nil {
+		return WGorm{}, err
+	}
+	return WGorm{db}, err
 }
