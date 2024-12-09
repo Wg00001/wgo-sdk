@@ -8,6 +8,19 @@ func SliceToMap[K comparable, V any](slice []V, getKey func(item V) K) map[K]V {
 	return res
 }
 
+func SliceToMapGroup[K comparable, V any](slice []V, getKeyGroupBy func(item V) K) map[K][]V {
+	res := make(map[K][]V, len(slice)/5*4)
+	for i := range slice {
+		key := getKeyGroupBy(slice[i])
+		if _, ok := res[key]; !ok {
+			res[key] = []V{slice[i]}
+		} else {
+			res[key] = append(res[key], slice[i])
+		}
+	}
+	return res
+}
+
 func SliceToSet[K comparable, T any](slice []T, getKey func(item T) K) map[K]struct{} {
 	res := make(map[K]struct{}, len(slice)/5*4)
 	for i := range slice {
