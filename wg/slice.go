@@ -1,7 +1,11 @@
 package wg
 
+var SliceCapFunc = func(originLen int) int {
+	return originLen / 5 * 4 //默认cap是原len的80%
+}
+
 func SliceToMap[K comparable, V any](slice []V, getKey func(item V) K) map[K]V {
-	res := make(map[K]V, len(slice)/5*4)
+	res := make(map[K]V, SliceCapFunc(len(slice)))
 	for i := range slice {
 		res[getKey(slice[i])] = slice[i]
 	}
@@ -9,7 +13,7 @@ func SliceToMap[K comparable, V any](slice []V, getKey func(item V) K) map[K]V {
 }
 
 func SliceToMapGroup[K comparable, V any](slice []V, getKeyGroupBy func(item V) K) map[K][]V {
-	res := make(map[K][]V, len(slice)/5*4)
+	res := make(map[K][]V, SliceCapFunc(len(slice)))
 	for i := range slice {
 		key := getKeyGroupBy(slice[i])
 		if _, ok := res[key]; !ok {
@@ -22,7 +26,7 @@ func SliceToMapGroup[K comparable, V any](slice []V, getKeyGroupBy func(item V) 
 }
 
 func SliceToSet[K comparable, T any](slice []T, getKey func(item T) K) map[K]struct{} {
-	res := make(map[K]struct{}, len(slice)/5*4)
+	res := make(map[K]struct{}, SliceCapFunc(len(slice)))
 	for i := range slice {
 		res[getKey(slice[i])] = struct{}{}
 	}
@@ -33,7 +37,7 @@ func SliceToSlice[T any, U any](slice []T, getResultSliceItem func(item T) U) []
 	if slice == nil || len(slice) == 0 {
 		return []U{}
 	}
-	res := make([]U, 0, len(slice))
+	res := make([]U, 0, SliceCapFunc(len(slice)))
 	for _, item := range slice {
 		res = append(res, getResultSliceItem(item))
 	}
@@ -42,7 +46,7 @@ func SliceToSlice[T any, U any](slice []T, getResultSliceItem func(item T) U) []
 
 func SliceUnique[E comparable](slice []E) []E {
 	var res []E
-	memo := make(map[E]struct{})
+	memo := make(map[E]struct{}, SliceCapFunc(len(slice)))
 	for i := range slice {
 		if _, ok := memo[slice[i]]; !ok {
 			res = append(res, slice[i])
@@ -60,6 +64,16 @@ func SliceChunk[T any](slice []T, size int) [][]T {
 	res := make([][]T, 0, (n+size-1)/size)
 	for i := 0; i < n; i += size {
 		res = append(res, slice[i:min(i+size, n)])
+	}
+	return res
+}
+
+func SliceFilter[T any](slice []T, isOk func(item T) bool) []T {
+	res := make([]T, 0, SliceCapFunc(len(slice)))
+	for _, item := range slice {
+		if isOk(item) {
+			res = append(res, item)
+		}
 	}
 	return res
 }

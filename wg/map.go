@@ -1,5 +1,9 @@
 package wg
 
+var MapCapFunc = func(originLen int) int {
+	return originLen / 5 * 4
+}
+
 func MapKeySlice[K comparable, V any](table map[K]V) []K {
 	res := make([]K, 0, len(table))
 	for k := range table {

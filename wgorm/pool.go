@@ -45,6 +45,7 @@ func (p *Pool) Init(option wg_pool.Option) error {
 		}
 		p.conn = append(p.conn, &cur)
 	}
+	return nil
 }
 
 func (p *Pool) Get() (WGorm, error) {
