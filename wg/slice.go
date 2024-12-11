@@ -1,13 +1,23 @@
 package wg
 
-// DefaultSliceCap slice转换目标的默认cap,用户可以直接修改此函数,以根据需要来修改默认值,使性能更符合需求
-var DefaultSliceCap = func(originLen int) int {
+import "errors"
+
+// defaultSliceCap slice转换目标的默认cap,用户可以直接修改此函数,以根据需要来修改默认值,使性能更符合需求
+var defaultSliceCap = func(originLen int) int {
 	return originLen / 5 * 4 //默认cap是原len的80%
+}
+
+func SliceCap(f func(originLen int) int) error {
+	if f == nil {
+		return errors.New("func is nil")
+	}
+	defaultSliceCap = f
+	return nil
 }
 
 // SliceToMap 将slice转成map,需要传入函数用于获取Key和Value
 func SliceToMap[K comparable, V, T any](slice []T, getKeyValue func(item T) (K, V)) map[K]V {
-	res := make(map[K]V, DefaultSliceCap(len(slice)))
+	res := make(map[K]V, defaultSliceCap(len(slice)))
 	for _, item := range slice {
 		k, v := getKeyValue(item)
 		res[k] = v
@@ -17,7 +27,7 @@ func SliceToMap[K comparable, V, T any](slice []T, getKeyValue func(item T) (K, 
 
 // SliceToIndex 使用map对slice进行索引,需要传入函数获得索引值
 func SliceToIndex[K comparable, V any](slice []V, getKey func(item V) K) map[K]V {
-	res := make(map[K]V, DefaultSliceCap(len(slice)))
+	res := make(map[K]V, defaultSliceCap(len(slice)))
 	for _, item := range slice {
 		res[getKey(item)] = item
 	}
@@ -26,7 +36,7 @@ func SliceToIndex[K comparable, V any](slice []V, getKey func(item V) K) map[K]V
 
 // SliceToMapGroup 将slice转成map,但是索引冲突时不覆盖而是保存成数组
 func SliceToMapGroup[K comparable, V, T any](slice []T, getKeyGroupBy func(item T) (K, V)) map[K][]V {
-	res := make(map[K][]V, DefaultSliceCap(len(slice)))
+	res := make(map[K][]V, defaultSliceCap(len(slice)))
 	for _, item := range slice {
 		key, value := getKeyGroupBy(item)
 		if _, ok := res[key]; !ok {
@@ -40,7 +50,7 @@ func SliceToMapGroup[K comparable, V, T any](slice []T, getKeyGroupBy func(item 
 
 // SliceToIndexGroup 使用map对slice进行索引,但是索引冲突时不覆盖而是保存成数组
 func SliceToIndexGroup[K comparable, V any](slice []V, getKeyGroupBy func(item V) K) map[K][]V {
-	res := make(map[K][]V, DefaultSliceCap(len(slice)))
+	res := make(map[K][]V, defaultSliceCap(len(slice)))
 	for i := range slice {
 		key := getKeyGroupBy(slice[i])
 		if _, ok := res[key]; !ok {
@@ -54,7 +64,7 @@ func SliceToIndexGroup[K comparable, V any](slice []V, getKeyGroupBy func(item V
 
 // SliceToSet 将slice转成set,即value的类型为空struct的map
 func SliceToSet[K comparable, T any](slice []T, getKey func(item T) K) map[K]struct{} {
-	res := make(map[K]struct{}, DefaultSliceCap(len(slice)))
+	res := make(map[K]struct{}, defaultSliceCap(len(slice)))
 	for i := range slice {
 		res[getKey(slice[i])] = struct{}{}
 	}
@@ -66,7 +76,7 @@ func SliceToSlice[T, U any](slice []T, getResultSliceItem func(item T) U) []U {
 	if slice == nil || len(slice) == 0 {
 		return []U{}
 	}
-	res := make([]U, 0, DefaultSliceCap(len(slice)))
+	res := make([]U, 0, defaultSliceCap(len(slice)))
 	for _, item := range slice {
 		res = append(res, getResultSliceItem(item))
 	}
@@ -76,7 +86,7 @@ func SliceToSlice[T, U any](slice []T, getResultSliceItem func(item T) U) []U {
 // SliceUnique 数组去重
 func SliceUnique[E comparable](slice []E) []E {
 	var res []E
-	memo := make(map[E]struct{}, DefaultSliceCap(len(slice)))
+	memo := make(map[E]struct{}, defaultSliceCap(len(slice)))
 	for i := range slice {
 		if _, ok := memo[slice[i]]; !ok {
 			res = append(res, slice[i])
@@ -101,7 +111,7 @@ func SliceChunk[T any](slice []T, size int) [][]T {
 
 // SliceFilter 过滤slice中的元素,当传入函数的返回值为false将该元素过滤
 func SliceFilter[T any](slice []T, isOk func(item T) bool) []T {
-	res := make([]T, 0, DefaultSliceCap(len(slice)))
+	res := make([]T, 0, defaultSliceCap(len(slice)))
 	for _, item := range slice {
 		if isOk(item) {
 			res = append(res, item)
