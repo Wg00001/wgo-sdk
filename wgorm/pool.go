@@ -49,6 +49,7 @@ func (p *Pool) Init(option wg_pool.Option) error {
 }
 
 func (p *Pool) Get() (WGorm, error) {
+	return WGorm{}, nil
 }
 
 func (p *Pool) CloseAll() {
@@ -56,6 +57,7 @@ func (p *Pool) CloseAll() {
 }
 
 func (p *Pool) Len() int {
+	return 0
 }
 
 func (p *Pool) Open() (WGorm, error) {
