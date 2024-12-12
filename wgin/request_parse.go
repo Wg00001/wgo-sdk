@@ -26,6 +26,8 @@ func Query[T any](c *gin.Context, key string) (result T) {
 	return QueryDefault(c, key, result)
 }
 
+// todo:使用reflect而不是类型断言
+
 // QueryDefault function retrieves the value for a query parameter from the Gin context,
 // and returns the default value if the parameter is not present or is invalid.
 // The default value is passed as the third argument, and its type is inferred based on the argument passed.

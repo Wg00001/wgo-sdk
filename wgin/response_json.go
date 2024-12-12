@@ -9,32 +9,35 @@ import (
 )
 
 var mutex sync.Mutex
-var isDo bool
+var isInit bool
 var defaultStatusConfig = statusConfig{
-	status: map[int]string{
-		http.StatusOK:                  "Success 200",
-		http.StatusBadRequest:          "BadRequest 400",
-		http.StatusUnauthorized:        "Unauthorized 401",
-		http.StatusInternalServerError: "InternalServerError 500",
-		http.StatusBadGateway:          "BadGateway 502",
-	},
-	useStatus: false,
+	http.StatusOK:                  "Success 200",
+	http.StatusBadRequest:          "BadRequest 400",
+	http.StatusUnauthorized:        "Unauthorized 401",
+	http.StatusInternalServerError: "InternalServerError 500",
+	http.StatusBadGateway:          "BadGateway 502",
 }
 
-// 可以使用Init修改和新建本map来构建status的映射,以自动获取message信息
-type statusConfig struct {
-	status    map[int]string // key:status code, value:message
-	useStatus bool
-}
+// status的设置,可以使用Init修改和新建来构建status的映射'
+// 保存自定义业务错误码的映射key:status code, value:message
+type statusConfig map[int]string
 
-func InitStatusConfig(s statusConfig) error {
+// InitStatusConfig statusConfig只有当Init了才会被使用; 如果不传入数值的话,就会直接使用default的status; init只能被调用一次,但是一次可以传入多个map
+func InitStatusConfig(ss ...statusConfig) error {
 	mutex.Lock()
 	defer mutex.Unlock()
-	if isDo {
+	if isInit {
 		return errors.New("StatusConfig has been Init")
 	}
-	defaultStatusConfig = s
-	isDo = true
+	if len(ss) != 0 {
+		defaultStatusConfig = make(map[int]string)
+		for _, s := range ss {
+			for k, v := range s {
+				defaultStatusConfig[k] = v
+			}
+		}
+	}
+	isInit = true
 	return nil
 }
 
@@ -51,9 +54,19 @@ func Response(c *gin.Context, status int, args ...interface{}) {
 		Status:    status,
 		Timestamp: time.Now().Unix(),
 	}
-	if msg, ok := defaultStatusConfig.status[status]; ok {
-		resp.Message = msg
-	}
+
+	//获取自定义业务错误码
+	func() { //原地使用匿名函数进行屎上雕花
+		mutex.Lock()
+		defer mutex.Unlock()
+		if !isInit {
+			return
+		}
+		if msg, ok := defaultStatusConfig[status]; ok {
+			resp.Message = msg
+		}
+	}()
+
 	if len(args) >= 1 {
 		if str, ok := args[0].(string); ok {
 			// 如果 args[0] 是字符串类型，执行相关逻辑
