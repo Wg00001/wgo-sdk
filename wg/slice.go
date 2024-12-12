@@ -1,20 +1,5 @@
 package wg
 
-import "errors"
-
-// defaultSliceCap slice转换目标的默认cap,用户可以直接修改此函数,以根据需要来修改默认值,使性能更符合需求
-var defaultSliceCap = func(originLen int) int {
-	return originLen / 5 * 4 //默认cap是原len的80%
-}
-
-func SliceCap(f func(originLen int) int) error {
-	if f == nil {
-		return errors.New("func is nil")
-	}
-	defaultSliceCap = f
-	return nil
-}
-
 // SliceToMap 将slice转成map,需要传入函数用于获取Key和Value
 func SliceToMap[K comparable, V, T any](slice []T, getKeyValue func(item T) (K, V)) map[K]V {
 	res := make(map[K]V, defaultSliceCap(len(slice)))
