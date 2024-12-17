@@ -2,7 +2,7 @@ package wgorm
 
 import (
 	"errors"
-	"github.com/wg00001/wgo-sdk/wg_pool"
+	"github.com/wg00001/wgo-sdk/pool"
 	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -29,10 +29,10 @@ type Pool struct {
 	option Option
 }
 
-var _ wg_pool.Pool[WGorm] = (*Pool)(nil)
-var _ wg_pool.Option = (*Option)(nil)
+var _ pool.Pool[WGorm] = (*Pool)(nil)
+var _ pool.Option = (*Option)(nil)
 
-func (p *Pool) Init(option wg_pool.Option) error {
+func (p *Pool) Init(option pool.Option) error {
 	var ok bool
 	p.option, ok = option.(Option)
 	if !ok {

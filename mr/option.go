@@ -1,4 +1,4 @@
-package wg_mr
+package mr
 
 import (
 	"context"

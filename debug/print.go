@@ -1,4 +1,4 @@
-package wg_debug
+package debug
 
 import (
 	"encoding/json"

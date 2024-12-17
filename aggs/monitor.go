@@ -1,4 +1,4 @@
-package wg_aggs
+package aggs
 
 import (
 	"fmt"

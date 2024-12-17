@@ -1,4 +1,4 @@
-package wg_pool
+package pool
 
 type Pool[T any] interface {
 	Init(option Option) error

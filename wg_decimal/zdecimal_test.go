@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/shopspring/decimal"
 	"testing"
-	wgo_mr "wgo-sdk/wg_mr"
+	wgo_mr "wgo-sdk/mr"
 )
 
 func TestDecimal(t *testing.T) {
