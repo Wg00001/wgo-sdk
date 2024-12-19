@@ -44,7 +44,7 @@ func New[T Number](val T) Decimal {
 	case float32:
 		result.Decimal = decimal.NewFromFloat(float64(v))
 	case float64:
-		result.Decimal = decimal.NewFromFloat32(float32(v))
+		result.Decimal = decimal.NewFromFloat(v)
 	}
 	return result
 }
