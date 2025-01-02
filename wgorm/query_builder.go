@@ -25,7 +25,11 @@ func (q *WGorm) IfWhere(conditions bool, query interface{}, arg ...interface{}) 
 	if !conditions || q.Error != nil {
 		return q
 	}
-	q.DB = q.Where(query, arg)
+	if arg == nil || len(arg) == 0 {
+		q.DB = q.Where(query)
+	} else {
+		q.DB = q.Where(query, arg)
+	}
 	return q
 }
 
@@ -75,7 +79,7 @@ func (q *WGorm) NzLimit(page, pageSize int) *WGorm {
 	if q.Error != nil {
 		return q
 	}
-	if pageSize <= 0 {
+	if pageSize < 0 {
 		q.Error = fmt.Errorf("ERR: wgorm AddPageLimit -pagesize Less than 0")
 	}
 	if page <= 0 {
@@ -91,4 +95,9 @@ func (q *WGorm) Count(count *int64) *WGorm {
 	}
 	q.DB.Count(count)
 	return q
+}
+
+func (q *WGorm) ToSQL() string {
+	stmt := q.Session(&gorm.Session{DryRun: true, SkipDefaultTransaction: true}).Find(nil).Statement
+	return q.Dialector.Explain(stmt.SQL.String(), stmt.Vars...)
 }
